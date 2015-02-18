@@ -1,7 +1,7 @@
 <?php
 /*
 Plugin Name: EG Bulk Edit Alt Text
-Plugin URI: http://isabelcastillo.com/free-plugins/@todo
+Plugin URI: http://isabelcastillo.com/free-plugins/eazyest-gallery-bulk-edit-alt-text
 Description: Update the alt text for all images in your Eazyest Gallery.
 Version: 1.0
 Author: Isabel Castillo
@@ -54,7 +54,7 @@ class EG_Bulk_Edit_Alt_Text {
 	* For each image in the Eazyest Gallery, if no alt text exists, 
 	* update the alt text with the attachment caption or title.
 	* 
-	* @since 0.1
+	* @since 1.0
 	*/
     function update_alt_texts(){
 		
@@ -92,7 +92,7 @@ class EG_Bulk_Edit_Alt_Text {
 	/**
 	* Run our script while sanitizing input field
 	* @test that it does not run when not checked
-	* @since 0.1
+	* @since 1.0
 	*/
 	function sanitize($input){
 
@@ -100,20 +100,25 @@ class EG_Bulk_Edit_Alt_Text {
 		if ( 'on' == $input ) {
 			$this->update_alt_texts();
 
-			add_settings_error(
-				'beat_update_alttext_disclaimer',
-				'',
-				__( 'Alt Texts for your Eazyest Gallery Images have been updated.', 'eg-bulk-edit-alt-text' ),
-				'updated'
-			);
+			$type = 'updated';
+            $message = __( 'Alt Texts for your Eazyest Gallery Images have been updated.', 'eg-bulk-edit-alt-text' );
 
+		} else {
+			$type = 'error';
+            $message = __( 'Checkbox must be checked before Alt Texts can be updated.', 'eg-bulk-edit-alt-text' );
 		}
+		add_settings_error(
+			'beat_update_alttext_disclaimer',
+			'',
+			$message,
+			$type
+		);
 		return $input;
     }
 
 	/**
 	* Add the plugin options page under the Eazyest Gallery menu
-	* @since 0.1
+	* @since 1.0
 	*/
 	function add_plugin_page(){
 
@@ -124,7 +129,7 @@ class EG_Bulk_Edit_Alt_Text {
 	/**
 	* HTML for the options page
 	* @test that existing alt is not ovverridden.
-	* @since 0.1
+	* @since 1.0
 	*/
 	
 	function page_callback(){ ?>
@@ -152,7 +157,7 @@ class EG_Bulk_Edit_Alt_Text {
 
 	/**
 	* Register the plugin settings
-	* @since 0.1
+	* @since 1.0
 	*/
 	function page_init(){	
 		register_setting('bulkedit-alttext-settings-group', 'beat_update_alttext_disclaimer', array($this, 'sanitize'));
@@ -175,7 +180,7 @@ class EG_Bulk_Edit_Alt_Text {
 
 	/**
 	* Main Settings section callback
-	* @since 0.1
+	* @since 1.0
 	*/
 	function main_setting_section_callback() {
 		return true;
@@ -183,7 +188,7 @@ class EG_Bulk_Edit_Alt_Text {
 
 	/**
 	* HTML for checkbox setting
-	* @since 0.1
+	* @since 1.0
 	*/
 
 	function beat_alttext_setting_callback($args) {
@@ -200,7 +205,7 @@ class EG_Bulk_Edit_Alt_Text {
 		echo $html;
 	}
 
-	/** @test
+	/**
 	 * Displays all messages registered to 'your-settings-error-slug'
 	 */
 	function admin_notices() {
@@ -210,17 +215,3 @@ class EG_Bulk_Edit_Alt_Text {
 
 }
 $eg_bulk_edit_alt_text = EG_Bulk_Edit_Alt_Text::get_instance();
-
-
-/** @test remove
- * Log my own debug messages
- */
-function isa_log( $message ) {
-	if (WP_DEBUG === true) {
-		if ( is_array( $message) || is_object( $message ) ) {
-			error_log( print_r( $message, true ) );
-		} else {
-			error_log( $message );
-		}
-	}
-}
