@@ -8,3 +8,6 @@ This plugin fixes that problem. It will not override any existing "alt" text. If
 Usage
 ===========
 To update the alt text, go to Eazyest Gallery --> Bulk Edit Alt Text.
+
+
+[Documentation](http://isabelcastillo.com/free-plugins/eazyest-gallery-bulk-edit-alt-text)
