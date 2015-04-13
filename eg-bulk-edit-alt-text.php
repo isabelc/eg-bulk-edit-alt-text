@@ -2,8 +2,8 @@
 /*
 Plugin Name: EG Bulk Edit Alt Text
 Plugin URI: http://isabelcastillo.com/free-plugins/eazyest-gallery-bulk-edit-alt-text
-Description: Update the alt text for all images in your Eazyest Gallery.
-Version: 1.0
+Description: Update the alt text for all published images in Eazyest Gallery.
+Version: 1.1-beta1
 Author: Isabel Castillo
 Author URI: http://isabelcastillo.com
 License: GPL2
@@ -50,6 +50,56 @@ class EG_Bulk_Edit_Alt_Text {
 		load_plugin_textdomain( 'eg-bulk-edit-alt-text', false, dirname( plugin_basename( __FILE__ ) ) . '/languages/' );
 	}
 
+/**
+	 * Get all published post ids of type galleryfolder. Private not included.
+	 * @return array of galleryfolder post ids
+	 */
+	private function get_galleryfolder_ids() {
+		// Get all posts of type galleryfolder
+		$query_results = new WP_Query(
+			array(
+				'post_type' => 'galleryfolder',
+				'post_status' => array( 'publish' ),
+				'cache_results' => false,// speeds up query since we bypass the extra caching queries
+				'no_found_rows' => true,// bypass counting the results to see if we need pagination or not,
+				'nopaging' => true,
+				'fields' => 'ids'
+			)
+		);
+		return $query_results->posts;
+	}
+	/**
+	 * Get all image attachments of published Eazyest Gallery galleryfolders.
+	 * @return array of image ids
+	 */
+	private function get_eg_image_ids() {
+		$galleryfolders = $this->get_galleryfolder_ids();
+		if ( ( ! $galleryfolders ) || ( ! is_array($galleryfolders) ) ) {
+			return false;
+		}
+		// get all images of EG galleryfolders
+		$image_query = new WP_Query(
+			array(
+			'post_type' => 'attachment',
+			'post_status' => 'inherit',
+			'post_mime_type' => 'image',
+			'cache_results' => false,// speeds up query since we bypass the extra caching queries
+			'no_found_rows' => true,// bypass counting the results to see if we need pagination or not
+			'nopaging' => true,
+			'post_parent__in' => $galleryfolders,
+			// 'meta_query' => array(
+			// 		array(
+			// 			'key'     => 'egiptc_complete',// @test exclude completed images
+			// 			'compare' => 'NOT EXISTS',
+			// 		),
+			// ),
+			'orderby' => 'none'
+			)
+		);
+		return $image_query->posts;
+	}
+
+
 	/**
 	* For each image in the Eazyest Gallery, if no alt text exists, 
 	* update the alt text with the attachment caption or title.
@@ -60,21 +110,16 @@ class EG_Bulk_Edit_Alt_Text {
 		
 		set_time_limit(900);
 
-		$post_type = 'galleryfolder';
+		$images = $this->get_eg_image_ids();
 		
-		global $wpdb;
-		$where = get_posts_by_author_sql( $post_type );
-		$query = "SELECT * FROM $wpdb->posts p where p.post_type = 'attachment' AND (p.post_mime_type LIKE 'image/%')  AND (p.post_status = 'inherit') AND p.post_parent IN (SELECT $wpdb->posts.ID FROM $wpdb->posts  {$where} ) ORDER BY p.post_date DESC";
-		$results =  $wpdb->get_results( $query );
-		
-		if ( $results ) {
+		if ( $images ) {
 
-			foreach ( (array) $results as $image ) {
+			foreach ( (array) $images as $image ) {
 
 				$alt = get_post_meta( $image->ID, '_wp_attachment_image_alt', true );
 
 				// only update if alt text is empty
-				if ( empty( $alt ) ) {
+				if ( ! $alt ) {
 
 					// is there a caption (post_excerpt)?
 					if ( ! empty( $image->post_excerpt ) ) {
@@ -91,7 +136,6 @@ class EG_Bulk_Edit_Alt_Text {
 
 	/**
 	* Run our script while sanitizing input field
-	* @test that it does not run when not checked
 	* @since 1.0
 	*/
 	function sanitize($input){
@@ -128,7 +172,6 @@ class EG_Bulk_Edit_Alt_Text {
 
 	/**
 	* HTML for the options page
-	* @test that existing alt is not ovverridden.
 	* @since 1.0
 	*/
 	
